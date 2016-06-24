@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 
 import com.newnius.util.CRMsg;
 import com.newnius.util.CRObject;
+import com.newnius.chatroom.util.Message;
 import com.newnius.chatroom.util.RequestCode;
 import com.newnius.util.CRErrorCode;
 import com.newnius.util.CRLogger;
@@ -15,6 +16,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  *
@@ -24,7 +28,7 @@ public class C2SStaff extends Thread {
 
 	private Socket socket = null;
 	private C2SServer server;
-	
+
 	private BufferedReader reader = null;
 	private PrintWriter writer = null;
 	private CRObject currentUser = null;
@@ -38,7 +42,8 @@ public class C2SStaff extends Thread {
 	@Override
 	public void run() {
 		CRMsg res = new CRMsg(CRErrorCode.FAIL, "Unknown error");
-
+		Message message;
+		
 		try {
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));// 获得客户端的输入流
 			writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);// 获得客户端输出流)
@@ -46,7 +51,7 @@ public class C2SStaff extends Thread {
 				logger.info("Client " + socket.getInetAddress().getHostAddress() + "  connected");
 			}
 
-			while (server.isRun() && socket!=null && !socket.isClosed()) {
+			while (server.isRun() && socket != null && !socket.isClosed()) {
 				String str = reader.readLine();
 
 				if (str == null) {
@@ -72,14 +77,25 @@ public class C2SStaff extends Thread {
 					currentUser = msg.getObject("user");
 					server.addStaff(currentUser.get("username"), this);
 					res = new CRMsg(CRErrorCode.SUCCESS);
+					message = new Message(currentUser.get("username") + " joined.", 0,
+							Message.MESSAGE_TYPE_SYSTEM);
+					msg = new CRMsg(RequestCode.NEW_MESSAGE);
+					msg.set("message", message);
+					broadcast(msg);
 					break;
-					
+
 				case RequestCode.SEND_MESSAGE:// send message
 					res = new CRMsg(CRErrorCode.SUCCESS);
+					broadcast(msg);
 					break;
-					
+
 				case RequestCode.QUIT:// quit
 					res = new CRMsg(CRErrorCode.SUCCESS);
+					message = new Message(currentUser.get("username") + " quit.", 0,
+							Message.MESSAGE_TYPE_SYSTEM);
+					msg = new CRMsg(RequestCode.NEW_MESSAGE);
+					msg.set("message", message);
+					broadcast(msg);
 					stopConn();
 					break;
 
@@ -125,15 +141,22 @@ public class C2SStaff extends Thread {
 			logger.info("error");
 		}
 	}
-	
+
 	public void send(String msg) {
 		writer.println(msg);
 		writer.flush();
 		System.out.println("C2SServer sent to " + currentUser.get("username") + ": " + msg);
 	}
-	
 
-	
-
+	public void broadcast(CRMsg msg) {
+		Set<Entry<String, C2SStaff>> clients = server.getAllClients();
+		Set<String> users = new HashSet<>();
+		for (Entry<String, C2SStaff> entry : clients) {
+			//if (entry.getKey() != currentUser.get("username")) {
+				users.add(entry.getKey());
+			//}
+		}
+		server.broadcast(users, msg);
+	}
 
 }

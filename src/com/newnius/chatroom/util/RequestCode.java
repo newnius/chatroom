@@ -8,5 +8,6 @@ public class RequestCode{
 	public static final int GET_MESSAGE  = 3;
 	
 	public static final int GET_MEMBER_LIST = 4;
+	public static final int NEW_MESSAGE = 5;
 
 }

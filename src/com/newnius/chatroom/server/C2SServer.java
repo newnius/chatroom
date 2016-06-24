@@ -8,12 +8,13 @@ package com.newnius.chatroom.server;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.gson.Gson;
 import com.newnius.util.CRLogger;
 import com.newnius.util.CRMsg;
-import com.newnius.util.CRObject;
 
 /**
  * 
@@ -63,7 +64,6 @@ public class C2SServer implements Runnable {
 			}
 			clients.put(username, staff);
 			logger.info("add " + username);
-			logger.info(clients.size() + "");
 		}
 	}
 
@@ -73,11 +73,14 @@ public class C2SServer implements Runnable {
 				clients.remove(username);
 				logger.info("tick out " + username);
 			}
-			logger.info(clients.size() + "");
 		}
 	}
 	
-	public void broadcast(Set<CRObject> users, CRMsg msg) {
+	public Set<Entry<String, C2SStaff>> getAllClients(){
+		return clients.entrySet();
+	}
+	
+	public void broadcast(Set<String> users, CRMsg msg) {
 		new Thread(new Runnable() {
 
 			@Override
@@ -87,9 +90,9 @@ public class C2SServer implements Runnable {
 						String sendStr = new Gson().toJson(msg);
 						CRLogger.debug(getClass().getName(), "S2C sent: " + sendStr);
 
-						for (CRObject user : users) {
-							CRLogger.debug(getClass().getName(), "to:" + user.get("username"));
-							C2SStaff staff = clients.get(user.get("username"));
+						for (String username : users) {
+							CRLogger.debug(getClass().getName(), "to:" + username);
+							C2SStaff staff = clients.get(username);
 							if (staff == null)
 								continue;
 							staff.send(sendStr);
