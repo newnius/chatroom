@@ -8,7 +8,6 @@ package com.newnius.chatroom.server;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -60,6 +59,7 @@ public class C2SServer implements Runnable {
 		synchronized (clients) {
 			if (clients.containsKey(username)) {
 				logger.info("tick out " + username);
+				clients.get(username).stopConn();
 				clients.remove(username);
 			}
 			clients.put(username, staff);

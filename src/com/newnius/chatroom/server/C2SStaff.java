@@ -43,7 +43,7 @@ public class C2SStaff extends Thread {
 	public void run() {
 		CRMsg res = new CRMsg(CRErrorCode.FAIL, "Unknown error");
 		Message message;
-		
+
 		try {
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));// 获得客户端的输入流
 			writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);// 获得客户端输出流)
@@ -77,8 +77,7 @@ public class C2SStaff extends Thread {
 					currentUser = msg.getObject("user");
 					server.addStaff(currentUser.get("username"), this);
 					res = new CRMsg(CRErrorCode.SUCCESS);
-					message = new Message(currentUser.get("username") + " joined.", 0,
-							Message.MESSAGE_TYPE_SYSTEM);
+					message = new Message(currentUser.get("username") + " joined.", 0, Message.MESSAGE_TYPE_SYSTEM);
 					msg = new CRMsg(RequestCode.NEW_MESSAGE);
 					msg.set("message", message);
 					broadcast(msg);
@@ -91,8 +90,7 @@ public class C2SStaff extends Thread {
 
 				case RequestCode.QUIT:// quit
 					res = new CRMsg(CRErrorCode.SUCCESS);
-					message = new Message(currentUser.get("username") + " quit.", 0,
-							Message.MESSAGE_TYPE_SYSTEM);
+					message = new Message(currentUser.get("username") + " quit.", 0, Message.MESSAGE_TYPE_SYSTEM);
 					msg = new CRMsg(RequestCode.NEW_MESSAGE);
 					msg.set("message", message);
 					broadcast(msg);
@@ -149,14 +147,16 @@ public class C2SStaff extends Thread {
 	}
 
 	public void broadcast(CRMsg msg) {
+		CRMsg newmsg = new CRMsg(5);
+		newmsg.set("message", msg.getObject("message"));
 		Set<Entry<String, C2SStaff>> clients = server.getAllClients();
 		Set<String> users = new HashSet<>();
 		for (Entry<String, C2SStaff> entry : clients) {
-			//if (entry.getKey() != currentUser.get("username")) {
+			if (entry.getKey() != currentUser.get("username")) {
 				users.add(entry.getKey());
-			//}
+			}
 		}
-		server.broadcast(users, msg);
+		server.broadcast(users, newmsg);
 	}
 
 }
