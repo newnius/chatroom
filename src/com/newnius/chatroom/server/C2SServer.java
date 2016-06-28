@@ -7,13 +7,15 @@ package com.newnius.chatroom.server;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.List;
 
 import com.google.gson.Gson;
+import com.newnius.chatroom.util.Message;
 import com.newnius.util.CRLogger;
 import com.newnius.util.CRMsg;
+import com.newnius.util.CRObject;
 
 /**
  * 
@@ -25,18 +27,20 @@ public class C2SServer implements Runnable {
 	private CRLogger logger = CRLogger.getLogger(this.getClass().getName());
 	private static HashMap<String, C2SStaff> clients = new HashMap<String, C2SStaff>();
 
+	private MonitorWindow monitorWindow;
 	private int port;
 	private boolean isRun = true;
 
-	public C2SServer(int port) {
-		this.port = port;
+	public C2SServer(MonitorWindow monitorWindow, CRObject config) {
+		this.monitorWindow = monitorWindow;
+		this.port = config == null ? 1888 : config.getInt("port");
 	}
 
 	public void terminate() {
 		isRun = false;
 	}
-	
-	public boolean isRun(){
+
+	public boolean isRun() {
 		return isRun;
 	}
 
@@ -54,7 +58,7 @@ public class C2SServer implements Runnable {
 			logger.error(ex);
 		}
 	}
-	
+
 	public void addStaff(String username, C2SStaff staff) {
 		synchronized (clients) {
 			if (clients.containsKey(username)) {
@@ -63,6 +67,11 @@ public class C2SServer implements Runnable {
 				clients.remove(username);
 			}
 			clients.put(username, staff);
+
+			CRObject user = new CRObject();
+			user.set("username", username);
+
+			monitorWindow.memberJoin(user);
 			logger.info("add " + username);
 		}
 	}
@@ -71,16 +80,24 @@ public class C2SServer implements Runnable {
 		synchronized (clients) {
 			if (clients.containsKey(username)) {
 				clients.remove(username);
+				CRObject user = new CRObject();
+				user.set("username", username);
+
+				monitorWindow.memberQuit(user);
 				logger.info("tick out " + username);
 			}
 		}
 	}
-	
-	public Set<Entry<String, C2SStaff>> getAllClients(){
-		return clients.entrySet();
+
+	public List<String> getAllClients() {
+		List<String> users = new ArrayList<>();
+		for (String user : clients.keySet()) {
+			users.add(user);
+		}
+		return users;
 	}
-	
-	public void broadcast(Set<String> users, CRMsg msg) {
+
+	public void broadcast(List<String> users, CRMsg msg) {
 		new Thread(new Runnable() {
 
 			@Override
@@ -89,6 +106,8 @@ public class C2SServer implements Runnable {
 					try {
 						String sendStr = new Gson().toJson(msg);
 						CRLogger.debug(getClass().getName(), "S2C sent: " + sendStr);
+						
+						monitorWindow.newMessage(new Message(msg.getObject("message")));
 
 						for (String username : users) {
 							CRLogger.debug(getClass().getName(), "to:" + username);
@@ -104,7 +123,5 @@ public class C2SServer implements Runnable {
 			}
 		}).start();
 	}
-
-
 
 }

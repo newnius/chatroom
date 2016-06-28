@@ -11,7 +11,7 @@ public class Message extends CRObject {
 	// private long time;
 
 	public static final int MESSAGE_TYPE_NORMAL = 0;
-	public static final int MESSAGE_TYPE_SYSTEM = 0;
+	public static final int MESSAGE_TYPE_SYSTEM = 1;
 
 	public Message(long msgId, int msgType, String msgContent, long groupId, String username, long time) {
 		super();

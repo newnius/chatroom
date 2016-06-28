@@ -16,9 +16,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -85,7 +84,22 @@ public class C2SStaff extends Thread {
 
 				case RequestCode.SEND_MESSAGE:// send message
 					res = new CRMsg(CRErrorCode.SUCCESS);
+					msg.getObject("message").set("username", currentUser.get("username"));
+					msg.getObject("message").set("msgType", Message.MESSAGE_TYPE_NORMAL);
 					broadcast(msg);
+					break;
+					
+				case RequestCode.GET_MEMBER_LIST:// get member list
+					res = new CRMsg(RequestCode.GET_MEMBER_LIST);
+					List<String> usernames = server.getAllClients();
+					List<CRObject> users = new ArrayList<CRObject>();
+					for(String username: usernames){
+						CRObject user = new CRObject();
+						user.set("username", username);
+						users.add(user);
+					}
+					
+					res.setList("users", users);
 					break;
 
 				case RequestCode.QUIT:// quit
@@ -98,7 +112,7 @@ public class C2SStaff extends Thread {
 					break;
 
 				default:// unrecognized request
-					res = new CRMsg(CRErrorCode.FAIL);
+					res = new CRMsg(CRErrorCode.FAIL, "No such command");
 					break;
 				}
 
@@ -145,18 +159,17 @@ public class C2SStaff extends Thread {
 		writer.flush();
 		System.out.println("C2SServer sent to " + currentUser.get("username") + ": " + msg);
 	}
+	
+	
 
 	public void broadcast(CRMsg msg) {
 		CRMsg newmsg = new CRMsg(5);
 		newmsg.set("message", msg.getObject("message"));
-		Set<Entry<String, C2SStaff>> clients = server.getAllClients();
-		Set<String> users = new HashSet<>();
-		for (Entry<String, C2SStaff> entry : clients) {
-			if (entry.getKey() != currentUser.get("username")) {
-				users.add(entry.getKey());
-			}
-		}
+		List<String> users = server.getAllClients();
+		users.remove(currentUser.get("username"));
 		server.broadcast(users, newmsg);
 	}
+	
+	
 
 }
