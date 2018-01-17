@@ -5,8 +5,8 @@ One chatroom demo written in Java.
 
 ## Code
 
-  - [server](/newnius/chatroom/tree/server)
-  - [client](/newnius/chatroom/tree/client)
+  - [server](https://github.com/newnius/chatroom/tree/server)
+  - [client](https://github.com/newnius/chatroom/tree/client)
 
 ## How to run
 
