@@ -1,7 +1,6 @@
 package com.newnius.chatroom.util;
 
-
-public class RequestCode{
+public class RequestCode {
 	public static final int LOGIN = 0;
 	public static final int QUIT  = 1;
 	public static final int SEND_MESSAGE  = 2;

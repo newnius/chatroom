@@ -1,2 +1,2 @@
-# chatroom-server
+# chatroom-client
 online chatroom, using socket
